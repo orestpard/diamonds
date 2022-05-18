@@ -1,0 +1,1265 @@
+---
+title: "Data, Statistics and Probabilities"
+author: "Orestis Pardalis"
+date: "13/5/2022"
+output: html_document
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+## Including Plots
+
+You can also embed plots, for example:
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+# Import Libraries
+library(dplyr)
+library(ggplot2)
+library(nortest)
+library(ggpubr)
+library(DescriptiveStats.OBeu)
+library(stats)
+library(naniar)
+library(randomForest)
+library(missForest)
+library(Hmisc)
+View(diamonds)
+```
+
+```{r}
+# Import Data from ggplot library as DataFrame and see the basic information about it.
+data = as.data.frame(diamonds)
+str(data)
+```
+
+# 1. VISUALIZE THE DATA
+
+## a) Να απαντήσετε αν το data set ακολουθεί Κανονική Κατανομή για τις μεταβλητές carat, price, cut, x,y,z Να δοκιμάσετε και Hypothesis Testing, αλλά και με Frequent Distributions. Στη 2η περίπτωση να δοκιμάσετε διαφορετικά μεγέθη για το bin. Όσες μεταβλητές δεν ακολουθούν Κανονική Κατανομή, να ονοματίσετε την Κατανομή τους.
+
+```{r}
+# a) Check if the varibales: carat, price, x, y, z follow the normal distribution.  
+
+# 1st Check: wih Hypothesis Testing (Anderson-Darling normality test)
+# Hypothesis Testing:
+# Μηδενική Υπόθεση Ηο: The variable follows the normal distribution.
+# Εναλλακτική Υπόθεση: The variable does not follow the normal distribution.
+
+# 2nd Check: with Frequent Distribution Plots
+```
+
+```{r}
+# Feature carat:
+
+normtest_1 <- ad.test(data$carat)
+normtest_1
+str(normtest_1)
+
+# Οπτικός Έλεγχος (QQ-plot) #
+qqplot_1 <- ggqqplot(data = data$carat, conf.int = TRUE, 
+                            conf.int.level = 0.95, title = "Q-Q plot for Carat")
+qqplot_1
+
+#Συντελεστής λοξότητας #
+ds.skewness(data$carat)
+ds.kurtosis(data$carat)
+# συντελεστής κύρτωσης <3, συντελεστής λοξότητας θετικός και p-value<0.05, άρα
+# H μεταβλητή ακολουθεί πλατύκυρτη κατανομή με θετική ασσυμετρία, δηλαδή μη - κανονική κατανομή. #
+
+```
+```{r}
+# Frequency distribution
+
+# 1st (bin-0.2)
+range(data$carat)
+breaks_1 <- seq(0.2, 5.2, by=0.2)
+carat_cut_1 = cut(data$carat, breaks_1, right=FALSE)
+carat_freq_1 = table(carat_cut)
+cbind(carat_freq_1)
+# Histogram #
+carat_hist <- hist(data$carat, breaks = breaks_1, main = "Histogram of carat variable(bin-0.2)",
+                  xlab = "Carat", col = "lightblue", freq = TRUE)
+
+# 2nd (bin-0.1)
+breaks_2 <- seq(0.2, 5.2, by=0.1)
+carat_cut_2 = cut(data$carat, breaks_2, right=FALSE)
+carat_freq_2 = table(carat_cut_2)
+cbind(carat_freq_2)
+# Histogram #
+carat_hist <- hist(data$carat, breaks = breaks_2, main = "Histogram of carat variable (bin-0.1)",
+                  xlab = "Carat", col = "lightgreen", freq = TRUE)
+
+# 3rd (bin-0.5)
+breaks_3 <- seq(0.2, 5.2, by=0.5)
+carat_cut_3 = cut(data$carat, breaks_3, right=FALSE)
+carat_freq_3 = table(carat_cut_3)
+cbind(carat_freq_3)
+# Histogram #
+carat_hist <- hist(data$carat, breaks = breaks_3, main = "Histogram of carat variable (bin-0.5)",
+                  xlab = "Carat", col = "lightgreen", freq = TRUE)
+
+```
+
+```{r}
+# Feature price:
+
+normtest_2 <- ad.test(data$price)
+normtest_2
+str(normtest_2)
+
+# Οπτικός Έλεγχος (QQ-plot) #
+qqplot_2 <- ggqqplot(data = data$price, conf.int = TRUE, 
+                            conf.int.level = 0.95, title = "Q-Q plot for Price")
+qqplot_2
+
+#Συντελεστής λοξότητας #
+ds.skewness(data$price)
+ds.kurtosis(data$price)
+# συντελεστής κύρτωσης <3, συντελεστής λοξότητας θετικός και p-value<0.05, άρα
+# H μεταβλητή ακολουθεί πλατύκυρτη κατανομή με θετική ασσυμετρία, δηλαδή μη - κανονική κατανομή. #
+
+```
+```{r}
+# Frequency distribution
+
+# 1st (bin-10)
+range(data$price)
+breaks_1 <- seq(325, 18830, by=10)
+price_cut_1 = cut(data$price, breaks_1, right=FALSE)
+price_freq_1 = table(price_cut_1)
+cbind(price_freq_1)
+# Histogram #
+price_hist <- hist(data$price, breaks = breaks_1, main = "Histogram of Price variable(bin-10)",
+                  xlab = "Carat", col = "lightblue", freq = TRUE)
+
+# 2nd (bin-100)
+breaks_2 <- seq(325, 18830, by=100)
+price_cut_2 = cut(data$price, breaks_2, right=FALSE)
+price_freq_2 = table(price_cut_2)
+cbind(price_freq_2)
+# Histogram #
+price_hist <- hist(data$price, breaks = breaks_1, main = "Histogram of Price variable(bin-100)",
+                  xlab = "Carat", col = "lightgreen", freq = TRUE)
+
+# 3rd (bin-500)
+breaks_3 <- seq(325, 18830, by=500)
+price_cut_3 = cut(data$price, breaks_3, right=FALSE)
+price_freq_3 = table(price_cut_3)
+cbind(price_freq_3)
+# Histogram #
+price_hist <- hist(data$price, breaks = breaks_3, main = "Histogram of Price variable(bin-500)",
+                  xlab = "Carat", col = "orange", freq = TRUE)
+
+
+```
+
+```{r}
+# Feature x:
+
+normtest_3 <- ad.test(data$x)
+normtest_3
+str(normtest_3)
+
+# Οπτικός Έλεγχος (QQ-plot) #
+qqplot_3 <- ggqqplot(data = data$x, conf.int = TRUE, 
+                            conf.int.level = 0.95, title = "Q-Q plot for variable x")
+qqplot_3
+
+#Συντελεστής λοξότητας #
+ds.skewness(data$x)
+ds.kurtosis(data$x)
+# συντελεστής κύρτωσης <3, συντελεστής λοξότητας θετικός και p-value<0.05, άρα
+# H μεταβλητή ακολουθεί πλατύκυρτη κατανομή με θετική ασσυμετρία, δηλαδή μη - κανονική κατανομή. #
+
+```
+```{r}
+# Frequency distribution
+
+# 1st (bin-0.1)
+range(data$x)
+breaks_1 <- seq(0, 11, by=0.1)
+x_cut_1 = cut(data$x, breaks_1, right=FALSE)
+x_freq_1 = table(x_cut_1)
+cbind(x_freq_1)
+# Histogram #
+x_hist <- hist(data$x, breaks = breaks_1, main = "Histogram of x variable(bin-0.1)",
+                  xlab = "X", col = "lightblue", freq = TRUE)
+
+# 2nd (bin-1)
+breaks_2 <- seq(0, 11, by=1)
+x_cut_2 = cut(data$x, breaks_2, right=FALSE)
+x_freq_2 = table(x_cut_2)
+cbind(x_freq_2)
+# Histogram #
+x_hist <- hist(data$x, breaks = breaks_2, main = "Histogram of x variable(bin-1)",
+                  xlab = "X", col = "lightgreen", freq = TRUE)
+
+# 3rd (bin-0.5)
+breaks_3 <- seq(0, 11, by=0.5)
+x_cut_3 = cut(data$x, breaks_3, right=FALSE)
+x_freq_3 = table(x_cut_3)
+cbind(x_freq_3)
+# Histogram #
+x_hist <- hist(data$x, breaks = breaks_3, main = "Histogram of x variable(bin-0.5)",
+                  xlab = "X", col = "orange", freq = TRUE)
+
+```
+
+```{r}
+# Feature y:
+
+normtest_4 <- ad.test(data$y)
+normtest_4
+str(normtest_4)
+
+# Οπτικός Έλεγχος (QQ-plot) #
+qqplot_4 <- ggqqplot(data = data$y, conf.int = TRUE, 
+                            conf.int.level = 0.95, title = "Q-Q plot for variable y")
+qqplot_4
+
+#Συντελεστής λοξότητας #
+ds.skewness(data$y)
+ds.kurtosis(data$y)
+# συντελεστής κύρτωσης <3, συντελεστής λοξότητας θετικός και p-value<0.05, άρα
+# H μεταβλητή ακολουθεί¨πλατύκυρτη κατανομή με θετική ασσυμετρία, δηλαδή μη - κανονική κατανομή. #
+
+```
+```{r}
+# Frequency distribution
+
+# 1st (bin-1)
+range(data$y)
+breaks_1 <- seq(0, 60, by=1)
+y_cut_1 = cut(data$y, breaks_1, right=FALSE)
+y_freq_1 = table(y_cut_1)
+cbind(y_freq_1)
+# Histogram #
+y_hist <- hist(data$y, breaks = breaks_1, main = "Histogram of y variable(bin-1)",
+                  xlab = "Y", col = "lightblue", freq = TRUE)
+
+# 2nd (bin-2)
+breaks_2 <- seq(0, 60, by=2)
+y_cut_2 = cut(data$y, breaks_2, right=FALSE)
+y_freq_2 = table(y_cut_2)
+cbind(y_freq_2)
+# Histogram #
+y_hist <- hist(data$y, breaks = breaks_2, main = "Histogram of y variable(bin-2)",
+                  xlab = "Y", col = "lightgreen", freq = TRUE)
+
+# 3rd (bin-5)
+breaks_3 <- seq(0, 60, by=5)
+y_cut_3 = cut(data$y, breaks_3, right=FALSE)
+y_freq_3 = table(y_cut_3)
+cbind(y_freq_3)
+# Histogram #
+y_hist <- hist(data$y, breaks = breaks_3, main = "Histogram of y variable(bin-5)",
+                  xlab = "Y", col = "orange", freq = TRUE)
+```
+
+```{r}
+# Feature z:
+
+normtest_5 <- ad.test(data$z)
+normtest_5
+str(normtest_5)
+
+# Οπτικός Έλεγχος (QQ-plot) #
+qqplot_5 <- ggqqplot(data = data$z, conf.int = TRUE, 
+                            conf.int.level = 0.95, title = "Q-Q plot for variable z")
+qqplot_5
+
+#Συντελεστής λοξότητας #
+ds.skewness(data$z)
+ds.kurtosis(data$z)
+# συντελεστής κύρτωσης <3, συντελεστής λοξότητας θετικός και p-value<0.05, άρα
+# H μεταβλητή ακολουθεί¨πλατύκυρτη κατανομή με θετική ασσυμετρία, δηλαδή μη - κανονική κατανομή. #
+```
+
+```{r}
+# Frequency distribution
+
+# 1st (bin-1)
+range(data$y)
+breaks_1 <- seq(0, 60, by=1)
+y_cut_1 = cut(data$y, breaks_1, right=FALSE)
+y_freq_1 = table(y_cut_1)
+cbind(y_freq_1)
+# Histogram #
+y_hist <- hist(data$y, breaks = breaks_1, main = "Histogram of y variable(bin-1)",
+                  xlab = "Y", col = "lightblue", freq = TRUE)
+
+# 2nd (bin-2)
+breaks_2 <- seq(0, 60, by=2)
+y_cut_2 = cut(data$y, breaks_2, right=FALSE)
+y_freq_2 = table(y_cut_2)
+cbind(y_freq_2)
+# Histogram #
+y_hist <- hist(data$y, breaks = breaks_2, main = "Histogram of y variable(bin-2)",
+                  xlab = "Y", col = "lightgreen", freq = TRUE)
+
+# 3rd (bin-5)
+breaks_3 <- seq(0, 60, by=5)
+y_cut_3 = cut(data$y, breaks_3, right=FALSE)
+y_freq_3 = table(y_cut_3)
+cbind(y_freq_3)
+# Histogram #
+y_hist <- hist(data$y, breaks = breaks_3, main = "Histogram of y variable(bin-5)",
+                  xlab = "Y", col = "orange", freq = TRUE)
+```
+
+```{r}
+# Frequency distribution
+
+# 1st (bin-0.5)
+range(data$z)
+breaks_1 <- seq(0, 32, by=0.5)
+z_cut_1 = cut(data$z, breaks_1, right=FALSE)
+z_freq_1 = table(z_cut_1)
+cbind(z_freq_1)
+# Histogram #
+z_hist <- hist(data$z, breaks = breaks_1, main = "Histogram of z variable(bin-0.5)",
+                  xlab = "Z", col = "lightblue", freq = TRUE)
+
+# 2nd (bin-1)
+breaks_2 <- seq(0, 60, by=1)
+z_cut_2 = cut(data$z, breaks_2, right=FALSE)
+z_freq_2 = table(z_cut_2)
+cbind(z_freq_2)
+# Histogram #
+z_hist <- hist(data$z, breaks = breaks_2, main = "Histogram of z variable(bin-1)",
+                  xlab = "Z", col = "lightgreen", freq = TRUE)
+
+# 3rd (bin-2)
+breaks_3 <- seq(0, 60, by=2)
+z_cut_3 = cut(data$z, breaks_3, right=FALSE)
+z_freq_3 = table(z_cut_3)
+cbind(z_freq_3)
+# Histogram #
+z_hist <- hist(data$z, breaks = breaks_3, main = "Histogram of z variable(bin-2)",
+                  xlab = "Z", col = "orange", freq = TRUE)
+```
+## b) Να απαντήσετε αν υπάρχουν outliers ή extreme values στο data set, στις ποσοτικές μεταβλητές και αν ναι να συγκρίνετε πόσο επηρεάζουν τα βασικά μέτρα θέσης και διασποράς για τα αντίστοιχα ποσοτικά features.
+
+```{r}
+str(data)
+
+```
+
+```{r}
+# Numerical variables: carat, depth, table, price, x, y, z (6).
+# For outliers exploration we are going to make a boxplot and a math-numeric analysis.
+
+# Carat 
+# Boxplot 
+ggplot(data = data, aes(y = carat)) +
+  geom_boxplot(color = "orange", fill = "green")
+
+# Compare basic stats with and without ouliers
+stat_1 = summary(data$carat)
+
+Q1 <- quantile(data$carat, .25)
+Q3 <- quantile(data$carat, .75)
+IQR <- IQR(data$carat)
+no_outliers <- subset(data, data$carat > (Q1 - 1.5*IQR) & data$carat < (Q3 + 1.5*IQR))
+stat_2 = summary(no_outliers$carat)
+
+# Combine them to a matrix.
+cbind(stat_1, stat_2)
+```
+
+```{r}
+# Depth 
+# Boxplot 
+ggplot(data = data, aes(y = depth)) +
+    geom_boxplot(color = "blue", fill = "white")
+
+# Compare basic stats with and without ouliers
+stat_1 = summary(data$depth)
+
+Q1 <- quantile(data$depth, .25)
+Q3 <- quantile(data$depth, .75)
+IQR <- IQR(data$depth)
+no_outliers <- subset(data, data$depth > (Q1 - 1.5*IQR) & data$depth < (Q3 + 1.5*IQR))
+stat_2 = summary(no_outliers$depth)
+
+# Combine them to a matrix.
+cbind(stat_1, stat_2)
+```
+
+```{r}
+# Table 
+# Boxplot 
+ggplot(data = data, aes(y = table)) +
+  geom_boxplot(color = "grey", fill = "red")
+
+# Compare basic stats with and without ouliers
+stat_1 = summary(data$table)
+
+Q1 <- quantile(data$table, .25)
+Q3 <- quantile(data$table, .75)
+IQR <- IQR(data$table)
+no_outliers <- subset(data, data$table > (Q1 - 1.5*IQR) & data$table < (Q3 + 1.5*IQR))
+stat_2 = summary(no_outliers$table)
+
+# Combine them to a matrix.
+cbind(stat_1, stat_2)
+
+```
+
+```{r}
+# Price 
+# Boxplot 
+ggplot(data = data, aes(y = price)) +
+  geom_boxplot(color = "green", fill = "yellow")
+
+# Compare basic stats with and without ouliers
+stat_1 = summary(data$price)
+
+Q1 <- quantile(data$price, .25)
+Q3 <- quantile(data$price, .75)
+IQR <- IQR(data$price)
+no_outliers <- subset(data, data$price > (Q1 - 1.5*IQR) & data$price < (Q3 + 1.5*IQR))
+stat_2 = summary(no_outliers$price)
+
+# Combine them to a matrix.
+cbind(stat_1, stat_2)
+```
+
+```{r}
+# X variable 
+# Boxplot 
+ggplot(data = data, aes(y = x)) +
+  geom_boxplot()
+
+# Compare basic stats with and without ouliers
+stat_1 = summary(data$x)
+
+Q1 <- quantile(data$x, .25)
+Q3 <- quantile(data$x, .75)
+IQR <- IQR(data$x)
+no_outliers <- subset(data, data$x > (Q1 - 1.5*IQR) & data$x < (Q3 + 1.5*IQR))
+stat_2 = summary(no_outliers$x)
+
+# Combine them to a matrix.
+cbind(stat_1, stat_2)
+```
+
+```{r}
+# Y variable 
+# Boxplot 
+ggplot(data = data, aes(y = y)) +
+  geom_boxplot()
+
+# Compare basic stats with and without ouliers
+stat_1 = summary(data$y)
+
+Q1 <- quantile(data$y, .25)
+Q3 <- quantile(data$y, .75)
+IQR <- IQR(data$y)
+no_outliers <- subset(data, data$y > (Q1 - 1.5*IQR) & data$y < (Q3 + 1.5*IQR))
+stat_2 = summary(no_outliers$y)
+
+# Combine them to a matrix.
+cbind(stat_1, stat_2)
+```
+
+```{r}
+# Z variable 
+# Boxplot 
+ggplot(data = data, aes(y = z)) +
+  geom_boxplot()
+
+# Compare basic stats with and without ouliers
+stat_1 = summary(data$z)
+
+Q1 <- quantile(data$z, .25)
+Q3 <- quantile(data$z, .75)
+IQR <- IQR(data$z)
+no_outliers <- subset(data, data$z > (Q1 - 1.5*IQR) & data$z < (Q3 + 1.5*IQR))
+stat_2 = summary(no_outliers$z)
+
+# Combine them to a matrix.
+cbind(stat_1, stat_2)
+```
+
+## c)Να αναπαραστήσετε σε Pie chart, το ποσοστό των κλάσεων στα features που έχουν κατηγορηματικά δεδομένα.
+
+```{r}
+# We have 3 categorical features to examine: cut, color and clarity.
+
+# First, we construct the frequency tables.
+# Then, we use them to represent three piecharts, one for each categorical feature.
+```
+
+```{r}
+# Cut
+
+# Πίνακας συχνοτήτων.
+freq_cut <- table(data$cut)
+freq_cut_df <- as.data.frame(freq_cut)
+colnames(freq_cut_df) <- c("Levels","Frequency")
+rel_freq_cut <- prop.table(freq_cut)
+rel_freq_cut_df <- as.data.frame(rel_freq_cut)
+colnames(rel_freq_cut_df ) = c("Levels"," Relative Frequency")
+cut_df = cbind(freq_cut_df,rel_freq_cut_df)
+cut_df
+
+# Ραβδόγραμμα
+freq_cut_barplot <- barplot(freq_cut, main="Cut", xlab="Cut levels of diamonds",
+                              ylab = "Frequency", horiz = FALSE, cex.names = 0.8, col = "green")
+
+# Γράφημα Πίτας (piechart)
+piepercent <- paste(round(100*rel_freq_cut,2),"%", sep="")
+freq_cut_pie <- pie(freq_cut, labels=piepercent, col=rainbow(length(freq_cut)),
+                      main="Cut of diamonds")
+legend(x="topright",legend = names(freq_cut),fill = rainbow(length(freq_cut)))
+
+```
+
+```{r}
+# Color
+
+# Πίνακας συχνοτήτων.
+freq_color <- table(data$color)
+freq_color_df <- as.data.frame(freq_color)
+colnames(freq_color_df) <- c("Colors","Frequency")
+rel_freq_color <- prop.table(freq_color)
+rel_freq_color_df <- as.data.frame(rel_freq_color)
+colnames(rel_freq_color_df ) = c("Colors"," Relative Frequency")
+color_df = cbind(freq_color_df,rel_freq_color_df)
+color_df
+
+# Ραβδόγραμμα
+freq_color_barplot <- barplot(freq_color, main="Color", xlab="Colors of diamonds",
+                              ylab = "Frequency", horiz = FALSE, cex.names = 0.8, col = "lightblue")
+
+# Γράφημα Πίτας (piechart)
+piepercent <- paste(round(100*rel_freq_color,2),"%", sep="")
+freq_color_pie <- pie(freq_color, labels=piepercent, col=rainbow(length(freq_color)),
+                      main="Colors of diamonds")
+legend(x="topright",legend = names(freq_color),fill = rainbow(length(freq_color)))
+```
+
+```{r}
+# Clarity
+
+# Πίνακας συχνοτήτων.
+freq_clarity <- table(data$clarity)
+freq_clarity_df <- as.data.frame(freq_clarity)
+colnames(freq_clarity_df) <- c("Levels","Frequency")
+rel_freq_clarity <- prop.table(freq_clarity)
+rel_freq_clarity_df <- as.data.frame(rel_freq_clarity)
+colnames(rel_freq_clarity_df ) = c("Levels"," Relative Frequency")
+clarity_df = cbind(freq_clarity_df,rel_freq_clarity_df)
+clarity_df
+
+# Ραβδόγραμμα
+freq_clarity_barplot <- barplot(freq_clarity, main="Color", xlab="Clarity levels of diamonds",
+                              ylab = "Frequency", horiz = FALSE, cex.names = 0.8, col = "orange")
+
+# Γράφημα Πίτας (piechart)
+piepercent <- paste(round(100*rel_freq_clarity,2),"%", sep="")
+freq_clarity_pie <- pie(freq_clarity, labels=piepercent, col=rainbow(length(freq_clarity)),
+                      main="Clarity levels of diamonds")
+legend(x="topright",legend = names(freq_clarity),fill = rainbow(length(freq_clarity)))
+```
+
+## d) Να παρατηρήσετε συσχετίσεις μεταξύ των features και να τις ονοματίσετε σε γραφικές παραστάσεις.
+
+```{r}
+# We check for correlations between variables with Pearson for numerical data 
+# and X - squared test for categorical variables.
+
+# Numerical data
+```
+
+```{r}
+# carat - depth
+
+ggscatter(data, x = 'carat', y = 'depth', 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Carat values", ylab = "Depth")
+
+# Συντελεστής Pearson R = 0.028, οι μεταβλητές είναι (σχεδόν) ανεξάρτητες.
+
+```
+
+```{r}
+# carat - table
+
+ggscatter(data, x = 'carat', y = 'table', 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Carat values", ylab = "Table")
+
+# Συντελεστής Pearson R = 0.18, οι μεταβλητές είναι εξαιρετικά χαμηλή εξάρτηση.
+```
+
+```{r}
+# carat - price
+
+ggscatter(data, x = 'carat', y = 'price', 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Carat values", ylab = "Price")
+
+# Συντελεστής Pearson R = 0.92, οι μεταβλητές είναι σχεδόν πλήρως εξαρτημένα.
+```
+
+
+```{r}
+# depth - table
+
+ggscatter(data, x = 'depth', y = 'table', 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Depth", ylab = "Table")
+
+# Συντελεστής Pearson R = -0.3, οι μεταβλητές έχουν χαμηλή αρνητική εξάρτηση.
+```
+
+```{r}
+# depth - price
+
+ggscatter(data, x = 'depth', y = 'price', 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Depth", ylab = "Price")
+
+# Συντελεστής Pearson R = -0.011, οι μεταβλητές είναι (σχεδόν) ανεξάρτητες.
+```
+
+```{r}
+# table - price
+
+ggscatter(data, x = 'table', y = 'price', 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Table", ylab = "Price")
+
+# Συντελεστής Pearson R = 0.13, οι μεταβλητές έχουν πολύ χαμηλή εξάρτηση.
+```
+
+```{r}
+# Categorical Features (X^2 Test)
+# Μηδενική υπόθεση Η_ο: τα 2 χαρακτηριστικά που μελετώνται είναι ανεξάρτητα. 
+# Εναλλακτική υπόθεση Η_1: τα 2 χαρακτηριστικά είναι εξαρτημένα. 
+```
+
+```{r}
+# cut - color #
+cut_color_chitest <- chisq.test(table(data$cut, data$color))
+cut_color_chitest
+str(cut_color_chitest)
+# p-value < 0.05, επομένως απορρίπτουμε την μηδενική υπόθεση και είναι εξαρτημένες μεταβλητές.
+```
+
+```{r}
+# cut - clarity #
+cut_clarity_chitest <- chisq.test(table(data$cut, data$clarity))
+cut_clarity_chitest
+str(cut_clarity_chitest)
+# p-value < 0.05, επομένως απορρίπτουμε την μηδενική υπόθεση και είναι εξαρτημένες μεταβλητές.
+```
+```{r}
+# color - clarity #
+color_clarity_chitest <- chisq.test(table(data$color, data$clarity))
+color_clarity_chitest
+str(color_clarity_chitest)
+# p-value < 0.05, επομένως απορρίπτουμε την μηδενική υπόθεση και είναι εξαρτημένες μεταβλητές.
+```
+```{r}
+# Correlations between numerical and categorical data.
+# Ανάλυση διασποράς (ANOVA) 
+
+# Θα εξετάσουμε αν η διασπορά μιας ποσοτικής μεταβλητής για τις διάφορες κατηγορίες 
+# (περισσότερες από 2) μιας ποιοτικής είναι ίδια ή όχι 
+# (μόνο για την cut που μας ενδιαφέρει στα μοντέλα μετέπειτα).
+# Η_ο: διασπορές ίδιες.
+# Η_1: διασπορές άνισες.
+
+# cut - carat
+cut_carat_var.test<-var.test(x=data[data$cut=="Fair","carat"],
+                                    y=data[data$cut=="Good","carat"],
+                                    alternative = "two.sided",conf.level = 0.95)  
+cut_carat_var.test
+cut_carat_var.test2<-var.test(x=data[data$cut=="Good","carat"],
+                                    y=data[data$cut=="Very Good","carat"],
+                                    alternative = "two.sided",conf.level = 0.95)  
+cut_carat_var.test2
+cut_carat_var.test3<-var.test(x=data[data$cut=="Very Good","carat"],
+                                    y=data[data$cut=="Premium","carat"],
+                                    alternative = "two.sided",conf.level = 0.95)  
+cut_carat_var.test3
+cut_carat_var.test4<-var.test(x=data[data$cut=="Premium","carat"],
+                                    y=data[data$cut=="Ideal","carat"],
+                                    alternative = "two.sided",conf.level = 0.95)  
+cut_carat_var.test4
+# carat - cut
+
+# Οι διασπορές είναι ίσες (p-value>0.05) μόνο για τις κατηγορίες good & very good (υπάρχει μερική εξάρτηση)
+# , στα υπόλοιπα είναι διάφορες.
+
+```
+
+```{r}
+# cut - depth
+cut_depth_var.test<-var.test(x=data[data$cut=="Fair","depth"],
+                                    y=data[data$cut=="Good","depth"],
+                                    alternative = "two.sided",conf.level = 0.95)  
+cut_depth_var.test
+cut_depth_var.test2<-var.test(x=data[data$cut=="Good","depth"],
+                                    y=data[data$cut=="Very Good","depth"],
+                                    alternative = "two.sided",conf.level = 0.95)  
+cut_depth_var.test2
+cut_depth_var.test3<-var.test(x=data[data$cut=="Very Good","depth"],
+                                    y=data[data$cut=="Premium","depth"],
+                                    alternative = "two.sided",conf.level = 0.95)  
+cut_depth_var.test3
+cut_depth_var.test4<-var.test(x=data[data$cut=="Premium","depth"],
+                                    y=data[data$cut=="Ideal","depth"],
+                                    alternative = "two.sided",conf.level = 0.95)  
+cut_depth_var.test4
+
+# Οι διασπορές είναι σε όλες τις περιπτώσεις άνισες (p-value<0.05), δεν έχουμε κάποια εξάρτηση.
+```
+
+```{r}
+# cut - table
+cut_table_var.test<-var.test(x=data[data$cut=="Fair","table"],
+                                    y=data[data$cut=="Good","table"],
+                                    alternative = "two.sided",conf.level = 0.95)  
+cut_table_var.test
+cut_table_var.test2<-var.test(x=data[data$cut=="Good","table"],
+                                    y=data[data$cut=="Very Good","table"],
+                                    alternative = "two.sided",conf.level = 0.95)  
+cut_table_var.test2
+cut_table_var.test3<-var.test(x=data[data$cut=="Very Good","table"],
+                                    y=data[data$cut=="Premium","table"],
+                                    alternative = "two.sided",conf.level = 0.95)  
+cut_table_var.test3
+cut_table_var.test4<-var.test(x=data[data$cut=="Premium","table"],
+                                    y=data[data$cut=="Ideal","table"],
+                                    alternative = "two.sided",conf.level = 0.95)  
+cut_table_var.test4
+
+# Οι διασπορές είναι σε όλες τις περιπτώσεις άνισες (p-value<0.05), δεν έχουμε κάποια εξάρτηση.
+```
+
+```{r}
+# cut - price
+cut_price_var.test<-var.test(x=data[data$cut=="Fair","price"],
+                                    y=data[data$cut=="Good","price"],
+                                    alternative = "two.sided",conf.level = 0.95)  
+cut_price_var.test
+cut_price_var.test2<-var.test(x=data[data$cut=="Good","price"],
+                                    y=data[data$cut=="Very Good","price"],
+                                    alternative = "two.sided",conf.level = 0.95)  
+cut_price_var.test2
+cut_price_var.test3<-var.test(x=data[data$cut=="Very Good","price"],
+                                    y=data[data$cut=="Premium","price"],
+                                    alternative = "two.sided",conf.level = 0.95)  
+cut_price_var.test3
+cut_price_var.test4<-var.test(x=data[data$cut=="Premium","price"],
+                                    y=data[data$cut=="Ideal","price"],
+                                    alternative = "two.sided",conf.level = 0.95)  
+cut_price_var.test4
+
+# Οι διασπορές είναι σε όλες τις περιπτώσεις άνισες (p-value<0.05), 
+# εκτός από τις κατηγορίες Fair με Price που υπάρχει εξάρτηση (διασπορές ίσες).
+```
+
+
+```{r}
+
+```
+
+# 2. FREQUENT TABLE ΚΑΙ ΠΙΘΑΝΟΤΗΤΕΣ
+
+## a) Να κατασκευάσετε Frequent Table για τις διαστάσεις των διαμαντιών (x,y,z).
+
+```{r}
+# Frequent table for diamonds dimensions.
+
+# First create a new dataset only for the dimensions of the diamonds.
+df_dimensions = cbind(data$x, data$y, data$z)
+df_dimensions = as.data.frame(df_dimensions)
+df_dimns <- df_dimensions %>% rename( x = V1, y = V2, z = V3)
+head(df_dimns)
+str(df_dimns)
+
+
+```
+
+```{r}
+# Frequency table for x
+range(data$x)
+breaks_1 <- seq(0, 12, by=2)
+x_cut_1 = cut(data$x, breaks_1, right=FALSE)
+x_freq_1 = table(x_cut_1)
+# cbind(x_freq_1)
+
+# Frequency table for y
+range(data$y)
+breaks_1 <- seq(0, 60, by=10)
+y_cut_1 = cut(data$y, breaks_1, right=FALSE)
+y_freq_1 = table(y_cut_1)
+# cbind(y_freq_1)
+
+# Frequency table for z
+range(data$z)
+breaks_1 <- seq(0, 30, by=5)
+z_cut_1 = cut(data$z, breaks_1, right=FALSE)
+z_freq_1 = table(z_cut_1)
+# cbind(z_freq_1)
+
+# To combine all 3 dimensions in one frequency table: 
+cbind(x_freq_1, y_freq_1, z_freq_1)
+
+# The best thing to do is to remain to our best results for feature frequency from exercise 1a) - (xyz). This is not optimal.
+```
+
+
+```{r}
+
+```
+
+## b) Να υπολογίσετε τις πιθανότητες να βρεθεί ένα διαμάντι με διάσταση z ανάμεσα στις τιμές 4,11 και 4,29.
+
+```{r}
+# Η πιθανότητα να βρεθεί ένα διαμάντι με διάσταση z ανάμεσα στις τιμές 4 και 11.
+probability_1 <- nrow(data[data$z > 4 & data$z < 11,])/nrow(data[data$z,])
+probability_1
+# p1 = 0.278
+```
+
+```{r}
+# Η πιθανότητα να βρεθεί ένα διαμάντι με διάσταση z ανάμεσα στις τιμές 4 και 29.
+probability_2 <- nrow(data[data$z > 4 & data$z < 29,])/nrow(data[data$z,])
+probability_2
+# p2 = 0.278
+
+# Οι δύο πιθανότητες είναι ίδιες.
+```
+
+```{r}
+
+```
+
+## c) Να υπολογίσετε την δεσμευμένες πιθανότητες, ένα διαμάντι που είναι Premium, να έχει και χρώμα Ε, και ένα διαμάντι που έχει clarity SI2, να είναι Fair.
+```{r}
+# Η δεσμευμένη πιθανότητα ένα διαμάντι που είναι Premium, να έχει και χρώμα Ε, υπολογίζεται:
+conditional_probability_1 <- nrow(data[data$cut == "Premium" & data$color == "E",])/nrow(data[data$cut == "Premium",])
+conditional_probability_1
+#conditional_prob_1 <- data %>%
+#  summarize(prob = sum(cut == "Premium" & color == "E", na.rm = TRUE)/sum(cut == "Premium", na.rm = TRUE))
+# Η δεσμευμένη πιθανότητα είναι 0.169.
+```
+
+```{r}
+# Η δεσμευμένη πιθανότητα ένα διαμάντι που έχει clarity SI2, να είναι Fair, υπολογίζεται:
+conditional_probability_2 <- nrow(data[data$clarity == "SI2" & data$cut == "Fair",])/nrow(data[data$clarity == "SI2",])
+conditional_probability_2
+# Η δεσμευμένη πιθανότητα είναι 0.050.
+```
+
+```{r}
+
+```
+
+# 3. MISSING VALUES
+
+## Να βρείτε εάν υπάρχουν missing values ή μηδενικές τιμές (προφανώς σε features που δεν μπορούν να έχουν τιμή=0) και να το αντιμετωπίσετε. Να χρησιμοποιήσετε και RF, αλλά και την τεχνική με mean/επικρατούσα τιμή. Να αποθηκεύσετε το καινούργιο data set που θα προκύψει από κάθε διαφορετική επεξεργασία, σε νέα μεταβλητή, ώστε να είναι διαθέσιμα τρία dataset κατά τη διαδικασία του classification.
+
+```{r}
+# Check for missing values with a plot (gg_miss_var function from library naniar)
+
+# Check the ranges of the values for numerical variables.
+# We can see that the variables for the dimensions of the dataset have zero values witch is FALSE, as they are diamonds.
+# So, x,y and z variables will be replaced for our purpose. 
+range(data$carat)
+range(data$depth)
+range(data$table)
+range(data$price)
+range(data$x)
+range(data$y)
+range(data$z)
+
+# Check for other NA values graphically. 
+gg_miss_var(data)
+
+```
+
+```{r}
+# Convert, first zero values to NA from columns x,y and z.
+
+data2 = data
+
+data2$x[data2$x == 0] = NA
+data2$y[data2$y == 0] = NA
+data2$z[data2$z == 0] = NA
+
+gg_miss_var(data2)
+```
+
+```{r}
+# Now, we are ready to implement the two methods for filling the NA's values.
+
+# 1st method: Missing Value with Mean of the variable
+data_mean <- data2
+data_mean$x <- with(data_mean, impute(x, mean))
+data_mean$y <- with(data_mean, impute(y, mean))
+data_mean$z <- with(data_mean, impute(z, mean))
+gg_miss_var(data_mean)
+```
+
+```{r}
+# 2nd method: Missing Value with Meanb Imputations by randomForest
+
+# We will use library missForest and it's imputation as Random Forest's library imputation does not work for very large data as diamonds dataset.
+# missForest is an implementation of random forest algorithm
+
+data_rf <- missForest(data2)
+gg_miss_var(data_rf)
+```
+
+```{r}
+
+```
+
+
+
+# 4. TRAIN AND TEST NAÏVE BAYES CLASSIFICATION
+
+## a) Να κάνετε random sample τα δεδομένα, ώστε να πάρετε ένα επαρκές δείγμα, κατά την κρίση σας, από τις περίπου 50000 παρατηρήσεις.
+## b) Στη συνέχεια να κάνετε split το sample σας σε training και test set.
+## c) Να εκπαιδεύσετε το μοντέλο σας και να το αξιολογήσετε με το test set, με Naïve Bayes classification και ως μεταβλητή στόχος την cut. Δηλαδή να μπορεί το μοντέλο μας να κατηγοριοποιεί, ένα διαμάντι με βάση κάποια χαρακτηριστικά που εσείς θα επιλέξετε.
+## d) H διαδικασία να γίνει και για τα τρία data set.
+## e) Να παρουσιάσετε τις μετρήσεις και για τα τρία data set.
+
+```{r}
+# 1st model for initial data Frame 
+# Μεταβλητή πρόβλεψης η cut (target variable)
+
+# Set seed (αυτό το κάνουμε ώστε σε κάθε μοντέλο που τρέχουμε να παίρνουμε κάθε φορά τα ίδια δεδομένα)
+# και έτσι να γίνεται πραγματική σύκγριση μεταξύ των διάφορων μοντέλων.
+set.seed(1)
+# Ορισμός μεγέθους δείγματος από τα αρχικό σύνολο (decide sample size)
+# Συγκεκριμένα θα πάρουμε το 70% των αρχικών  δεδομένων.
+sample_size_1 = floor(0.7 * nrow(data))
+# Ορισμός συνόλου εκπαίδευσης (training set), το οποίο θα αποτελείται από το 80% των παρατηρήσεων.
+# Training set consists of 70% observations. 
+s_size_1 = floor(0.7 * nrow(data))
+s_size_1
+train_index_1 <- sample(1:nrow(data), size = s_size_1)
+train_1 <- data[train_index_1,]
+# Ορισμός συνόλου εκπάιδευσης (test set). 
+# Τest set consists of 30% observations of the sample data.
+test_1 <- data[-train_index_1,]
+# Κατασκευάζουμε το δέντρο χρησιμοποιώντας το σύνολο εκπαίδευσης. 
+# # Fitting the Naive Bayes Model
+model_1 = naiveBayes(cut~. , train)
+```
+
+```{r}
+# Προβλέψεις 
+# Make predicitons on test dataset.
+y_pred_1 <- predict(model_1, newdata = test_1)
+# Evaluation of the model
+# Κατασκευάζουμε τον Confusion matrix (Πίνακας σύγχησης). 
+# Ο πίνακας αυτός παρέχει τα αποτελέσματα και τις μετρικές αξιολόγησης του μοντέλου.
+ConMat_1<-table(y_pred_1, test_1$cut)
+ConMat_1
+confusionMatrix(ConMat_1)
+
+# Best model
+```
+
+```{r}
+# 2nd model for 2nd data Frame (where NA's are filled with the mean)
+# Μεταβλητή πρόβλεψης η cut (target variable)
+
+# Set seed (αυτό το κάνουμε ώστε σε κάθε μοντέλο που τρέχουμε να παίρνουμε κάθε φορά τα ίδια δεδομένα)
+# και έτσι να γίνεται πραγματική σύκγριση μεταξύ των διάφορων μοντέλων.
+set.seed(1)
+# Ορισμός μεγέθους δείγματος από τα αρχικό σύνολο (decide sample size)
+# Συγκεκριμένα θα πάρουμε το 70% των αρχικών  δεδομένων.
+sample_size_2 = floor(0.7 * nrow(data_mean))
+# Ορισμός συνόλου εκπαίδευσης (training set), το οποίο θα αποτελείται από το 80% των παρατηρήσεων.
+# Training set consists of 70% observations. 
+s_size_2 = floor(0.7 * nrow(data_mean))
+s_size_2
+train_index_2 <- sample(1:nrow(data_mean), size = s_size_2)
+train_2 <- data_mean[train_index_2,]
+# Ορισμός συνόλου εκπάιδευσης (test set). 
+# Τest set consists of 30% observations of the sample data.
+test_2 <- data_mean[-train_index_2,]
+# Κατασκευάζουμε το δέντρο χρησιμοποιώντας το σύνολο εκπαίδευσης. 
+# # Fitting the Naive Bayes Model
+model_2 = naiveBayes(cut~. , train_2)
+```
+
+```{r}
+# Προβλέψεις 
+# Make predicitons on test dataset.
+y_pred_2 <- predict(model_2, newdata = test_2)
+# Evaluation of the model
+# Κατασκευάζουμε τον Confusion matrix (Πίνακας σύγχησης). 
+# Ο πίνακας αυτός παρέχει τα αποτελέσματα και τις μετρικές αξιολόγησης του μοντέλου.
+ConMat_2<-table(y_pred_2, test_2$cut)
+ConMat_2
+confusionMatrix(ConMat_2)
+
+```
+
+```{r}
+# 3rd model for 3rd data Frame (where NA's are filled with the Random Forest imputation)
+# Μεταβλητή πρόβλεψης η cut (target variable)
+
+# Set seed (αυτό το κάνουμε ώστε σε κάθε μοντέλο που τρέχουμε να παίρνουμε κάθε φορά τα ίδια δεδομένα)
+# και έτσι να γίνεται πραγματική σύκγριση μεταξύ των διάφορων μοντέλων.
+set.seed(1)
+# Ορισμός μεγέθους δείγματος από τα αρχικό σύνολο (decide sample size)
+# Συγκεκριμένα θα πάρουμε το 70% των αρχικών  δεδομένων.
+sample_size_3 = floor(0.7 * nrow(data_rf))
+# Ορισμός συνόλου εκπαίδευσης (training set), το οποίο θα αποτελείται από το 80% των παρατηρήσεων.
+# Training set consists of 70% observations. 
+s_size_3 = floor(0.7 * nrow(data_rf))
+s_size_3
+train_index_3 <- sample(1:nrow(data_rf), size = s_size_3)
+train_3 <- data_rf[train_index_3,]
+# Ορισμός συνόλου εκπάιδευσης (test set). 
+# Τest set consists of 30% observations of the sample data.
+test_3 <- data_rf[-train_index_3,]
+# Κατασκευάζουμε το δέντρο χρησιμοποιώντας το σύνολο εκπαίδευσης. 
+# # Fitting the Naive Bayes Model
+model_3 = naiveBayes(cut~. , train_3)
+```
+
+```{r}
+# Προβλέψεις 
+# Make predicitons on test dataset.
+y_pred_3 <- predict(model_3, newdata = test_3)
+# Evaluation of the model
+# Κατασκευάζουμε τον Confusion matrix (Πίνακας σύγχησης). 
+# Ο πίνακας αυτός παρέχει τα αποτελέσματα και τις μετρικές αξιολόγησης του μοντέλου.
+ConMat_3<-table(y_pred_3, test_3$cut)
+ConMat_3
+confusionMatrix(ConMat_3)
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+# 5. FUTURE SELECTION AND ADJUSTMENTS
+
+Στο μοντέλο που θα σας δώσει την καλύτερη ακρίβεια (accuracy) από τα τρία, να δείτε πως μπορείτε να την βελτιώσετε.
+
+## a) Μέσα από τις συσχετίσεις που θα βρείτε στο 1ο ερώτημα, να επιλέξετε κατά την κρίση σας τα features που είναι απαραίτητα για την διαδικασία του classification, και να συγκρίνετε τις επιδόσεις για διαφορετικά sets από features. 
+
+```{r}
+# Κατασκυεάζουμε δύο καινούρια σύνολα δεδομένων πάνω στα οπποία θα κατασκευαστούν αντίστοιχα μοντέλα,
+# και τα οποία προκύπτουν από τις συσχετίσεις που υπολογίστηκαν στην 1η άσκηση.
+
+# 1o - 4th model
+data_f1 <- diamonds[,c("carat", "cut", "color", "clarity", "depth", "table", "price")]
+
+# 4th model for 4th data Frame 
+# Μεταβλητή πρόβλεψης η cut (target variable)
+
+# Set seed (αυτό το κάνουμε ώστε σε κάθε μοντέλο που τρέχουμε να παίρνουμε κάθε φορά τα ίδια δεδομένα)
+# και έτσι να γίνεται πραγματική σύκγριση μεταξύ των διάφορων μοντέλων.
+set.seed(1)
+# Ορισμός μεγέθους δείγματος από τα αρχικό σύνολο (decide sample size)
+# Συγκεκριμένα θα πάρουμε το 70% των αρχικών  δεδομένων.
+sample_size_4 = floor(0.7 * nrow(data_f1))
+# Ορισμός συνόλου εκπαίδευσης (training set), το οποίο θα αποτελείται από το 80% των παρατηρήσεων.
+# Training set consists of 70% observations. 
+s_size_4 = floor(0.7 * nrow(data_f1))
+s_size_4
+train_index_4 <- sample(1:nrow(data_f1), size = s_size_4)
+train_4 <- data_f1[train_index_4,]
+# Ορισμός συνόλου εκπάιδευσης (test set). 
+# Τest set consists of 30% observations of the sample data.
+test_4 <- data_f1[-train_index_4,]
+# Κατασκευάζουμε το δέντρο χρησιμοποιώντας το σύνολο εκπαίδευσης. 
+# # Fitting the Naive Bayes Model
+model_4 = naiveBayes(cut~. , train_4)
+```
+
+```{r}
+# Προβλέψεις 
+# Make predicitons on test dataset.
+y_pred_4 <- predict(model_4, newdata = test_4)
+# Evaluation of the model
+# Κατασκευάζουμε τον Confusion matrix (Πίνακας σύγχησης). 
+# Ο πίνακας αυτός παρέχει τα αποτελέσματα και τις μετρικές αξιολόγησης του μοντέλου.
+ConMat_4<-table(y_pred_4, test_4$cut)
+ConMat_4
+confusionMatrix(ConMat_4)
+```
+
+```{r}
+# Κατασκυεάζουμε δύο καινούρια σύνολα δεδομένων πάνω στα οπποία θα κατασκευαστούν αντίστοιχα μοντέλα,
+# και τα οποία προκύπτουν από τις συσχετίσεις που υπολογίστηκαν στην 1η άσκηση.
+
+# 2o - 4th model
+data_f2 <- diamonds[,c( "cut", "x", "y", "z")]
+
+# 4th model for 4th data Frame 
+# Μεταβλητή πρόβλεψης η cut (target variable)
+
+# Set seed (αυτό το κάνουμε ώστε σε κάθε μοντέλο που τρέχουμε να παίρνουμε κάθε φορά τα ίδια δεδομένα)
+# και έτσι να γίνεται πραγματική σύκγριση μεταξύ των διάφορων μοντέλων.
+set.seed(1)
+# Ορισμός μεγέθους δείγματος από τα αρχικό σύνολο (decide sample size)
+# Συγκεκριμένα θα πάρουμε το 70% των αρχικών  δεδομένων.
+sample_size_5 = floor(0.7 * nrow(data_f2))
+# Ορισμός συνόλου εκπαίδευσης (training set), το οποίο θα αποτελείται από το 80% των παρατηρήσεων.
+# Training set consists of 70% observations. 
+s_size_5 = floor(0.7 * nrow(data_f2))
+s_size_5
+train_index_5 <- sample(1:nrow(data_f2), size = s_size_5)
+train_5 <- data_f2[train_index_5,]
+# Ορισμός συνόλου εκπάιδευσης (test set). 
+# Τest set consists of 30% observations of the sample data.
+test_5 <- data_f2[-train_index_5,]
+# Κατασκευάζουμε το δέντρο χρησιμοποιώντας το σύνολο εκπαίδευσης. 
+# # Fitting the Naive Bayes Model
+model_5 = naiveBayes(cut~. , train_5)
+```
+
+```{r}
+# Προβλέψεις 
+# Make predicitons on test dataset.
+y_pred_5 <- predict(model_5, newdata = test_5)
+# Evaluation of the model
+# Κατασκευάζουμε τον Confusion matrix (Πίνακας σύγχησης). 
+# Ο πίνακας αυτός παρέχει τα αποτελέσματα και τις μετρικές αξιολόγησης του μοντέλου.
+ConMat_5<-table(y_pred_5, test_5$cut)
+ConMat_5
+confusionMatrix(ConMat_5)
+
+```
+
+```{r}
+
+```
+
+## b) Να δοκιμάσετε να κάνετε scale τα δεδομένα και να συγκρίνετε τις επιδόσεις.
+```{r}
+# 7th model for 3rd data Frame (where NA's are filled with the Random Forest imputation)
+# But with rescaled data.
+# Μεταβλητή πρόβλεψης η cut (target variable)
+
+# Set seed (αυτό το κάνουμε ώστε σε κάθε μοντέλο που τρέχουμε να παίρνουμε κάθε φορά τα ίδια δεδομένα)
+# και έτσι να γίνεται πραγματική σύκγριση μεταξύ των διάφορων μοντέλων.
+set.seed(1)
+# Ορισμός μεγέθους δείγματος από τα αρχικό σύνολο (decide sample size)
+# Συγκεκριμένα θα πάρουμε το 70% των αρχικών  δεδομένων.
+sample_size_7 = floor(0.7 * nrow(data_rf))
+# Ορισμός συνόλου εκπαίδευσης (training set), το οποίο θα αποτελείται από το 80% των παρατηρήσεων.
+# Training set consists of 70% observations. 
+s_size_7 = floor(0.7 * nrow(data_rf))
+s_size_7
+train_index_7 <- sample(1:nrow(data_rf), size = s_size_7)
+train_7 <- data_rf[train_index_7,]
+# Ορισμός συνόλου εκπάιδευσης (test set). 
+# Τest set consists of 30% observations of the sample data.
+test_7 <- data_rf[-train_index_7,]
+# Feature Scaling
+train_scale <- scale(train_7[, 1:10])
+test_scale <- scale(test_7[, 1:10])
+# Κατασκευάζουμε το δέντρο χρησιμοποιώντας το σύνολο εκπαίδευσης. 
+# # Fitting the Naive Bayes Model
+model_7 = naiveBayes(cut~. , train_scale)
+```
+
+```{r}
+# Προβλέψεις 
+# Make predicitons on test dataset.
+y_pred_7 <- predict(model_7, newdata = test_scale)
+# Evaluation of the model
+# Κατασκευάζουμε τον Confusion matrix (Πίνακας σύγχησης). 
+# Ο πίνακας αυτός παρέχει τα αποτελέσματα και τις μετρικές αξιολόγησης του μοντέλου.
+ConMat_7<-table(y_pred_7, test_7$cut)
+ConMat_7
+confusionMatrix(ConMat_7)
+
+```
+
+
+
+```{r}
+
+```
+## c) Να μεγαλώσετε το δείγμα για το training set, και γενικά το δείγμα σας σε σχέση με τον πληθυσμό των 50000 παρατηρήσεων.
+
+```{r}
+# Τέλος, εδώ, Θα αυξήσουμε τόσο το αρχικό δείγμα που πήραμε όσο και το ποσοστό των δεδομένων που 
+# θα ανήκουν στο σύνολο εκπαίδευσης.
+# Συγκεκριμένα, θα έχουμε 80% των αρχικών παρατηρήσεων στο δείγμα μας.
+# Και επίσης, το σύνολο εκπαίδευσης θα περιέχει 80% του δείγματος, ενώ το σύνολο ελέγχου το 20%.
+
+# 7th model for 3rd data Frame (where NA's are filled with the Random Forest imputation)
+# But with rescaled data.
+# Μεταβλητή πρόβλεψης η cut (target variable)
+
+# Set seed (αυτό το κάνουμε ώστε σε κάθε μοντέλο που τρέχουμε να παίρνουμε κάθε φορά τα ίδια δεδομένα)
+# και έτσι να γίνεται πραγματική σύκγριση μεταξύ των διάφορων μοντέλων.
+set.seed(1)
+# Ορισμός μεγέθους δείγματος από τα αρχικό σύνολο (decide sample size)
+# Συγκεκριμένα θα πάρουμε το 70% των αρχικών  δεδομένων.
+sample_size_8 = floor(0.8 * nrow(data_rf))
+# Ορισμός συνόλου εκπαίδευσης (training set), το οποίο θα αποτελείται από το 80% των παρατηρήσεων.
+# Training set consists of 70% observations. 
+s_size_8 = floor(0.8 * nrow(data_rf))
+s_size_8
+train_index_8 <- sample(1:nrow(data_rf), size = s_size_8)
+train_8 <- data_rf[train_index_8,]
+# Ορισμός συνόλου εκπάιδευσης (test set). 
+# Τest set consists of 30% observations of the sample data.
+test_8 <- data_rf[-train_index_8,]
+
+# Κατασκευάζουμε το δέντρο χρησιμοποιώντας το σύνολο εκπαίδευσης. 
+# # Fitting the Naive Bayes Model
+model_8 = naiveBayes(cut~. , train_8)
+```
+
+```{r}
+# Προβλέψεις 
+# Make predicitons on test dataset.
+y_pred_8 <- predict(model_8, newdata = test_8)
+# Evaluation of the model
+# Κατασκευάζουμε τον Confusion matrix (Πίνακας σύγχησης). 
+# Ο πίνακας αυτός παρέχει τα αποτελέσματα και τις μετρικές αξιολόγησης του μοντέλου.
+ConMat_8<-table(y_pred_8, test_8$cut)
+ConMat_8
+confusionMatrix(ConMat_8)
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
